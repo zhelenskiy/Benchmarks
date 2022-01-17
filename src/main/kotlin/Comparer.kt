@@ -2,10 +2,16 @@ import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 
 @ExperimentalTime
-fun compare(times: Int) {
+fun compare(times: Int, heatUpTimes: Int) {
+    compareImpl(times, boxedSequence = ::benchmarkBoxed, inlinedSequence = ::benchmarkInlined, heatUpTimes)
+    compareImpl(times, boxedSequence = ::benchmarkBoxedArray, inlinedSequence = ::benchmarkInlinedArray, heatUpTimes)
+}
+@ExperimentalTime
+fun compareImpl(times: Int, boxedSequence: (times: Int) -> Sequence<Duration>, inlinedSequence: (times: Int) -> Sequence<Duration>, heatUpTimes: Int) {
     val boxedResults = mutableListOf<Duration>()
     val inlinedResults = mutableListOf<Duration>()
-    (benchmarkBoxed(times) zip benchmarkInlined(times)).forEachIndexed { index, (boxed, inlined) ->
+    (boxedSequence(heatUpTimes) zip inlinedSequence(heatUpTimes)).forEach { _ -> }
+    (boxedSequence(times) zip inlinedSequence(times)).forEachIndexed { index, (boxed, inlined) ->
         println("${index + 1}: boxed = $boxed, inlined = $inlined")
         boxedResults.add(boxed)
         inlinedResults.add(inlined)
@@ -21,5 +27,5 @@ private fun List<Duration>.average() =
 
 @ExperimentalTime
 fun main() {
-    compare(500)
+    compare(80, 20)
 }
